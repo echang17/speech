@@ -1,0 +1,37 @@
+function []=codebook()
+
+%%%%% Placeholder CodeBook %%%%%
+%want 512 pieces
+codebook = wgn(512,60,0); %code book is a 512x60 matrix
+%each row is a different vector piece
+%FOR NOW, rand gaussian noise
+
+%%%%% Real CodeBook %%%%%
+%make a 50,000 long set of training analysis vector
+training = wgn(50000,60,0); %50000 vectors of 60 samples random gaussian noise
+distvec = ones(50000,1);
+
+pcodebook = wgn(512,60,0); %code book is a 512x60 matrix
+%512 arbitrarily chosen centroids
+%FOR NOW, rand gaussian noise
+
+
+%when using pdist, each ROW should be a different frame (vector)
+for i = 1:512 %loop through each frame in codebook
+    x = codebook(i,:); %x is the chosen frame
+    for j = 1:50000  %compare with all other frames in training set
+    current = training(j,:); %the frame being compared to x
+    distance = pdist([x;current]);
+    distvec(j) = distance;
+    end
+    [mymindist,trainNum] = min(distvec);
+    mycentroid = training(i,trainNum);
+    
+        
+        
+        
+        
+    end
+end
+
+end
