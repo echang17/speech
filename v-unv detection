@@ -1,117 +1,123 @@
 function [] = Project1(filename)
+
 [y, Fs] = wavread(filename); %open arbitrary sound file (general function)
+
 winlength = 200; %same window used from hw3 bc same audio files used
 Zn = conv(abs(diff(sign(y))),hamming(winlength));
 En = conv(y.^2,hamming(winlength));
-ZCtitle = sprintf(&#39;Zero Crossing Rate Histogram for %s&#39;,filename);
-Etitle = sprintf(&#39;Energy Histogram for %s&#39;,filename);
-Wtitle = sprintf(&#39;Waveform for %s&#39;,filename);
+ZCtitle = sprintf('Zero Crossing Rate Histogram for %s',filename);
+Etitle = sprintf('Energy Histogram for %s',filename);
+Wtitle = sprintf('Waveform for %s',filename);
+
 figure(1)
 subplot(2,1,1)
 hold on
 title(Etitle)
-xlabel(&#39;Energy Value&#39;)
-ylabel(&#39;Number of Energy Values&#39;)
+xlabel('Energy Value')
+ylabel('Number of Energy Values')
 hist(En,100)
-set(gca,&#39;FontSize&#39;,16)
+set(gca,'FontSize',16)
 ylim([0,2500])
 subplot(2,1,2)
 hold on
 title(ZCtitle)
-xlabel(&#39;Zero Crossing Value&#39;)
-ylabel(&#39;Number of Zero Crossing Values&#39;)
+xlabel('Zero Crossing Value')
+ylabel('Number of Zero Crossing Values')
 hist(Zn,100)
-set(gca,&#39;FontSize&#39;,16)
+set(gca,'FontSize',16)
 axis([0,200,0,4000])
-set(findall(gcf,&#39;type&#39;,&#39;text&#39;),&#39;FontSize&#39;,16,&#39;fontWeight&#39;,&#39;bold&#39;)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
 figure(2)
 subplot(3,1,1)
 hold on
 title(Wtitle)
-xlabel(&#39;Time(ms)&#39;)
-ylabel(&#39;Amplitude&#39;)
-plot(y,&#39;LineWidth&#39;,2)
+xlabel('Time(ms)')
+ylabel('Amplitude')
+plot(y,'LineWidth',2)
 ylim([-1,1])
-set(gca,&#39;FontSize&#39;,16)
+set(gca,'FontSize',16)
 subplot(3,1,2)
 hold on
-title(&#39;Zero Crossings Over Time&#39;)
-xlabel(&#39;Time (ms)&#39;)
-ylabel(&#39;Number of Zero Crossings&#39;)
-plot(Zn,&#39;LineWidth&#39;,2)
+title('Zero Crossings Over Time')
+xlabel('Time (ms)')
+ylabel('Number of Zero Crossings')
+plot(Zn,'LineWidth',2)
 ylim([0,200])
-
-set(gca,&#39;FontSize&#39;,16)
+set(gca,'FontSize',16)
 subplot(3,1,3)
 hold on
-title(&#39;Energy Over Time&#39;)
-xlabel(&#39;Time(ms)&#39;)
-ylabel(&#39;Short Term Energy&#39;)
-plot(En,&#39;LineWidth&#39;,2)
+title('Energy Over Time')
+xlabel('Time(ms)')
+ylabel('Short Term Energy')
+plot(En,'LineWidth',2)
 ylim([0,7])
-set(gca,&#39;FontSize&#39;,16)
-set(findall(gcf,&#39;type&#39;,&#39;text&#39;),&#39;FontSize&#39;,16,&#39;fontWeight&#39;,&#39;bold&#39;)
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
 ZnThresh = zeros(1,length(Zn)); %unvoiced
 UNVvec = zeros(1,length(Zn));
-UNVtime = (1:length(Zn))&#39;;
+UNVtime = (1:length(Zn))';
 for i = 1:length(Zn)
-if Zn(i) &gt;= 35 &amp;&amp; En(i) &lt;= 0.20 %energy is a much better telling of v/u
-ZnThresh(i) = y(i);
-UNVvec(i) = 1;
+  if Zn(i) >= 35 && En(i) <= 0.20 %energy is a much better telling of v/u
+    ZnThresh(i) = y(i);
+    UNVvec(i) = 1;
+  end
+  if UNVvec(i) == 0
+    UNVvec(i) = NaN;
+  end
+end
 
-end
-if UNVvec(i) == 0
-UNVvec(i) = NaN;
-end
-end
 EnThresh = zeros(1,length(En)); %voiced
 Vvec = zeros(1,length(En));
-Vtime = (1:length(En))&#39;;
+Vtime = (1:length(En))';
 for j = 1:length(En)
-if En(j) &gt;= 0.20
-EnThresh(j) = y(j);
-Vvec(j) = 1;
-end
-if Vvec(j) == 0
-Vvec(j) = NaN;
-end
+  if En(j) >= 0.20
+    EnThresh(j) = y(j);
+    Vvec(j) = 1;
+  end
+  if Vvec(j) == 0
+    Vvec(j) = NaN;
+  end
 end
 
 figure(3)
 title(Wtitle)
-xlabel(&#39;Time (ms)&#39;)
-ylabel(&#39;Amplitude&#39;)
+xlabel('Time (ms)')
+ylabel('Amplitude')
 hold on
-plot(y,&#39;g&#39;)
 
-set(gca,&#39;FontSize&#39;,16)
+plot(y,'g')
+set(gca,'FontSize',16)
 hold on
-plot(ZnThresh,&#39;b&#39;)
-set(gca,&#39;FontSize&#39;,16)
+plot(ZnThresh,'b')
+set(gca,'FontSize',16)
 hold on
-plot(EnThresh,&#39;r&#39;)
-set(gca,&#39;FontSize&#39;,16)
+plot(EnThresh,'r')
+set(gca,'FontSize',16)
 hold on
 %{
-plot(UNVvec,&#39;Color&#39;,&#39;b&#39;,&#39;LineWidth&#39;,4)
+plot(UNVvec,'Color','b','LineWidth',4)
 hold on
-plot(Vvec,&#39;Color&#39;,&#39;r&#39;,&#39;LineWidth&#39;,4)
+plot(Vvec,'Color','r','LineWidth',4)
 %}
-scatter(UNVtime,UNVvec,&#39;b&#39;,&#39;s&#39;,&#39;filled&#39;)
+scatter(UNVtime,UNVvec,'b','s','filled')
 hold on
-scatter(Vtime,Vvec,&#39;r&#39;,&#39;s&#39;,&#39;filled&#39;)
+scatter(Vtime,Vvec,'r','s','filled')
 hold on
-legend(&#39;Silent&#39;,&#39;Unvoiced&#39;,&#39;Voiced&#39;)
-set(findall(gcf,&#39;type&#39;,&#39;text&#39;),&#39;FontSize&#39;,16,&#39;fontWeight&#39;,&#39;bold&#39;)
+legend('Silent','Unvoiced','Voiced')
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
 
 %add white Gaussian Noise
-prompt = &#39;Enter desired SNR: &#39;;
+prompt = 'Enter desired SNR: ';
 SNR = input(prompt);
-yNew = awgn(y,SNR,&#39;measured&#39;,&#39;linear&#39;);
-nZCtitle = sprintf(&#39;Zero Crossing Rate Histogram for %s with %f dB
-SNR&#39;,filename,SNR);
-nEtitle = sprintf(&#39;Energy Histogram for %s with %f dB SNR&#39;,filename,SNR);
-nWtitle = sprintf(&#39;Waveform for %s with %f dB SNR&#39;,filename,SNR);
+yNew = awgn(y,SNR,'measured','linear');
+
+nZCtitle = sprintf('Zero Crossing Rate Histogram for %s with %f dB
+SNR',filename,SNR);
+nEtitle = sprintf('Energy Histogram for %s with %f dB SNR';,filename,SNR);
+nWtitle = sprintf('Waveform for %s with %f dB SNR',filename,SNR);
+
 ZnNew = conv(abs(diff(sign(yNew))),hamming(winlength));
 EnNew = conv(yNew.^2,hamming(winlength));
 
@@ -119,21 +125,21 @@ figure(4)
 subplot(2,1,1)
 hold on
 title(nEtitle)
-xlabel(&#39;Energy Value&#39;)
-ylabel(&#39;Number of Energy Values&#39;)
+xlabel('Energy Value')
+ylabel('Number of Energy Values')
 hist(EnNew,100)
-set(gca,&#39;FontSize&#39;,16)
+set(gca,'FontSize',16)
 %ylim([0,2500])
 subplot(2,1,2)
 hold on
-
 title(nZCtitle)
-xlabel(&#39;Zero Crossing Value&#39;)
-ylabel(&#39;Number of Zero Crossing Values&#39;)
+xlabel('Zero Crossing Value')
+ylabel('Number of Zero Crossing Values')
 hist(ZnNew,100)
-set(gca,&#39;FontSize&#39;,16)
+set(gca,'FontSize',16)
 %axis([0,200,0,4000])
-set(findall(gcf,&#39;type&#39;,&#39;text&#39;),&#39;FontSize&#39;,16,&#39;fontWeight&#39;,&#39;bold&#39;)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
 figure(5)
 subplot(3,1,1)
 hold on
