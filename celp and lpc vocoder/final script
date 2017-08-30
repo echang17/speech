@@ -1,0 +1,41 @@
+function [quantaK,quantG,M,beta,ehatstore,error] = FinalProject(filename)
+[y,Fs] = wavread(filename);
+%[y,s,error] = p2test(filename);
+
+totSamples = length(y); %length(s)?
+
+%want vocal tract window size 30ms- from Project 2, 10ms window = 80 samples
+samplesVWin = 3*80; % =240 samples in 1 Vocal Tract Window
+totVFrames = round(totSamples/samplesVWin); % =90 vocal tract frames
+
+%want sub-frames size 7.5ms
+samplesSWin = samplesVWin/4; % =60 samples in 1 sub-window
+
+totSFrames = round(totSamples/samplesSWin); % =359 sub-frames
+
+%%%%% CodeBook %%%%%
+%want 512 pieces
+codebook = zeros(512, samplesSWin); %code book is a 512x60 matrix
+for i = 1:512 
+    %each row is a different vector piece
+    codebook(i,:) = wgn(1,60,0); %FOR NOW, rand gaussian noise
+end
+p=10;
+
+%%%%% Long Term Prediction %%%%%
+[M,beta,ehat2,error2] = PitchEst(y);
+
+%%%%% LPC Coefficients (LPC Analysis only on VFrames) %%%%%%
+[quantParam,ehat1,error1] = LPanalysis(ehat2,p);
+
+
+
+%{
+[h,w] = freqz([1],quantaK);
+plot(w/pi,20*log10(abs(h)))
+%}
+
+
+
+
+end
