@@ -1,0 +1,234 @@
+function [y,s,error] = p2test(filename) %p2test(y) for error test (sSNR,wSNR)
+[y, Fs] = wavread(filename); %speech file
+
+load pp5.mat
+pp5_cut = pp5(1:300);
+
+total_samples = length(y);
+total_frames = total_samples/240; %80 samples/frame
+p = 10; %designated prediction order
+aKstore = ones(100,p);
+Gstore = ones(1,100);
+Astore = ones(100,p+1);
+e = []; %excitation
+
+for i = 1:total_frames
+    %%%%% Calculate LPC Coefficients %%%%%
+    frameRange = 1:240; %80 samples in a frame
+    startFrame = (i-1)*frameRange(end)+1; %first point in current frame
+    endFrame = startFrame+239; %last point in current frame
+    myFrame = y(startFrame:endFrame);
+    
+    [A,G,a,r] = autolpc(hamming(240).*(myFrame),p);
+    Gstore(i) = G; %store gain in a row vector (length 300 frames)
+    
+    for j = 1:length(a) 
+        aKstore(j,i) = a(j); %store lpc coeff in a matrix (300 rows, p col)
+    end
+    for k = 1:length(A) 
+        Astore(k,i) = A(k); %store denom vector coeff in a matrix (300 rows, p+1 col)
+    end
+    
+    
+    %%%%% Create excitation e(n) %%%%%
+    myPitch = pp5_cut(i);
+    if (myPitch == 0) %when the frame is unvoiced/silent
+        e = [e wgn(240,1,0)];
+    else %frame is voiced
+        ven = zeros(240,1); %voiced excitation train
+        if (prev == 0) %previous frame is unvoiced/silent
+            ven(1) = 1;
+            loc = 1;
+            while (myPitch + loc < 240)
+                ven(1 + myPitch) = 1;
+                loc = loc + myPitch;
+            end
+        else %previous frame is voiced
+            loc = loc - 240;
+            if (loc + myPitch < 1)
+                loc = 1 - myPitch;
+            end
+            while (loc + myPitch < 240)
+                ven(loc + myPitch) = 1;
+                loc = loc + myPitch;
+            end
+        end
+        e = [e ven]; %excitation signal(unscaled)
+    end
+    prev = myPitch;
+end
+
+
+%%%%% Scale Excitation Signal by Appropriate Gain from pp5 %%%%%
+ex = []; %for frames
+exn = []; %final excitation signal
+for i = 1:total_frames
+    ex = [ex e(1:240,i)'];
+    ein = e(1:240,i);
+    Gain = Gstore(i)/(sqrt(sum(ein.^2))+0.01); 
+    exn = [exn Gain*e(1:240,i)'];
+end
+
+
+
+%%%%% Synthesize New Signal %%%%%
+s = zeros(24000,1); %new signal
+error = zeros(24000,1);
+for i = 1:total_frames
+    ein = [e(1:240,i)];
+    Gain = Gstore(i)/(sqrt(sum(ein.^2))+0.01);
+    sout = filter(Gain,Astore(1:p+1,i),ein);
+     
+    if i==1
+        s(1:240) = sout(1:240);
+        endFrame = 240;
+    else
+        startFrame = (i-1)*240+1;
+        endFrame = startFrame+239;
+        s(startFrame:endFrame) = s(startFrame:endFrame)+sout(1:240);
+    end
+    error(startFrame:endFrame) = y(startFrame:endFrame)-s(startFrame:endFrame);
+end
+%{
+%SNR
+frame_error = ones(1,300);
+for i = 1:300
+    frameRange = 1:80; %80 samples in a frame
+    startFrame = (i-1)*frameRange(end)+1; %first point in current frame
+    endFrame = startFrame+79; %last point in current frame
+    myFrame = y(startFrame:endFrame);
+    
+    frame_error(i) = mean(abs(error(startFrame:endFrame)./(s(startFrame:endFrame)+0.01)));
+end
+sSNR = mean(abs(frame_error));
+
+error(find(isnan(error)))=[];
+s(find(isnan(s)))=[];
+wSNR = meanabs((error./(s+0.01)));
+    
+%}
+%%%%% Vowel %%%%%
+%{
+figure(1)
+plot(y(1500:1800),'LineWidth',2)
+xlabel('Time(ms)')
+ylabel('Amplitude')
+title('Input Waveform (Frame in a Vowel)')
+hold on
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
+figure(2)
+x=y(1500:1800);
+x=x.*hamming(301);
+p=12;
+[A,G,a,r]=autolpc(x,p);
+a = [1; a*(-1)];
+nfft=512;
+freq=linspace(0,Fs/2,nfft/2+1);
+fft_logmag = 20 * log10 ( abs( fft( x, nfft ) ) );
+fft_logmag = fft_logmag(1:nfft/2+1);
+plot(freq,fft_logmag,'LineWidth',2);
+lpc_logmag = -20 * log10 ( abs( fft( a, nfft ) ) );
+lpc_logmag = lpc_logmag(1:nfft/2+1);
+hold on;
+plot(freq,lpc_logmag-3,'LineWidth',2);
+xlabel('Frequency (Hz)')
+ylabel('Log Magnitude (dB)')
+title('Optimal P = 12 (Frame in a Vowel)')
+hold on
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
+figure(5)
+plot(error(1500:1800),'LineWidth',2)
+xlabel('Time(ms)')
+ylabel('Amplitude')
+title('Residual Error for P = 12 (Frame in a Vowel)')
+hold on
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
+figure(7)
+plot(exn(1501:1980),'LineWidth',2)
+xlabel('Samples')
+ylabel('Amplitude')
+title('Binary Source, 2 Consecutive Frames in a Vowel')
+hold on
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
+figure(9)
+plot(s(1501:1980),'Linewidth',2)
+xlabel('Time(ms)')
+ylabel('Amplitude')
+title('s(n), 2 Consecutive Frames in a Vowel, Binary Source Input')
+hold on
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+%}
+
+
+%%%%% Fricative %%%%%
+%{
+figure(3)
+plot(y(5000:5300),'LineWidth',2)
+xlabel('Time(ms)')
+ylabel('Amplitude')
+title('Input Waveform (Frame in a Fricative)')
+hold on
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
+figure(4)
+x=y(5000:5300);
+x=x.*hamming(301);
+p=12;
+[A,G,a,r]=autolpc(x,p);
+a = [1; a*(-1)];
+nfft=512;
+freq=linspace(0,Fs/2,nfft/2+1);
+fft_logmag = 20 * log10 ( abs( fft( x, nfft ) ) );
+fft_logmag = fft_logmag(1:nfft/2+1);
+plot(freq,fft_logmag,'LineWidth',2);
+lpc_logmag = -20 * log10 ( abs( fft( a, nfft ) ) );
+lpc_logmag = lpc_logmag(1:nfft/2+1);
+hold on;
+plot(freq,lpc_logmag-3,'LineWidth',2);
+xlabel('Frequency (Hz)')
+ylabel('Log Magnitude (dB)')
+title('Optimal P = 12 (Frame in a Fricative)')
+hold on
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
+figure(6)
+plot(error(5000:5300),'LineWidth',2)
+xlabel('Time(ms)')
+ylabel('Amplitude')
+title('Residual Error for P = 12 (Frame in a Fricative)')
+hold on
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
+figure(8)
+plot(exn(5001:5480),'LineWidth',2)
+xlabel('Samples')
+ylabel('Amplitude')
+title('Binary Source, 2 Consecutive Frames in a Fricative')
+hold on
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+%}
+figure(10)
+plot(s(5001:5480),'Linewidth',2)
+xlabel('Time(ms)')
+ylabel('Amplitude')
+title('s(n), 2 Consecutive Frames in a Fricative, Binary Source Input')
+hold on
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+%}
+
+
+end
