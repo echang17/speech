@@ -144,74 +144,74 @@ figure(5)
 subplot(3,1,1)
 hold on
 title(nWtitle)
-xlabel(&#39;Time(ms)&#39;)
-ylabel(&#39;Amplitude&#39;)
-plot(yNew,&#39;LineWidth&#39;,2)
+xlabel('Time(ms)')
+ylabel('Amplitude')
+plot(yNew,'LineWidth',2)
 %ylim([-1,1])
-set(gca,&#39;FontSize&#39;,16)
+set(gca,'FontSize',16)
 subplot(3,1,2)
 hold on
-title(&#39;Zero Crossings Over Time&#39;)
-xlabel(&#39;Time (ms)&#39;)
-ylabel(&#39;Number of Zero Crossings&#39;)
-plot(ZnNew,&#39;LineWidth&#39;,2)
+title('Zero Crossings Over Time')
+xlabel('Time (ms)')
+ylabel('Number of Zero Crossings')
+plot(ZnNew,'LineWidth',2)
 %ylim([0,200])
-set(gca,&#39;FontSize&#39;,16)
+set(gca,'FontSize',16)
 subplot(3,1,3)
 hold on
-title(&#39;Energy Over Time&#39;)
-xlabel(&#39;Time(ms)&#39;)
-ylabel(&#39;Short Term Energy&#39;)
-plot(EnNew,&#39;LineWidth&#39;,2)
+title('Energy Over Time')
+xlabel('Time(ms)')
+ylabel('Short Term Energy')
+plot(EnNew,'LineWidth',2)
 %ylim([0,7])
-set(gca,&#39;FontSize&#39;,16)
-set(findall(gcf,&#39;type&#39;,&#39;text&#39;),&#39;FontSize&#39;,16,&#39;fontWeight&#39;,&#39;bold&#39;)
+set(gca,'FontSize',16)
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
+
 nZnThresh = zeros(1,length(ZnNew)); %unvoiced
 nUNVvec = zeros(1,length(ZnNew));
-nUNVtime = (1:length(ZnNew))&#39;;
+nUNVtime = (1:length(ZnNew))';
 for i = 1:length(yNew)
-if ZnNew(i) &gt;= 35 &amp;&amp; EnNew(i) &lt;= 0.20 %energy is a much better telling of v/u
-nZnThresh(i) = yNew(i);
-nUNVvec(i) = 1;
+  if ZnNew(i) >= 35 && EnNew(i) <= 0.20 %energy is a much better telling of v/u
+    nZnThresh(i) = yNew(i);
+    nUNVvec(i) = 1;
+  end
+  if nUNVvec(i) == 0
+    nUNVvec(i) = NaN;
+  end
+end
 
-end
-if nUNVvec(i) == 0
-nUNVvec(i) = NaN;
-
-end
-end
 nEnThresh = zeros(1,length(EnNew)); %voiced
 nVvec = zeros(1,length(EnNew));
-nVtime = (1:length(EnNew))&#39;;
+nVtime = (1:length(EnNew))';
 for j = 1:length(yNew)
-if EnNew(j) &gt;= 0.20
-nEnThresh(j) = yNew(j);
-nVvec(j) = 1;
-end
-if nVvec(j) == 0
-nVvec(j) = NaN;
-end
+  if EnNew(j) >= 0.20
+    nEnThresh(j) = yNew(j);
+    nVvec(j) = 1;
+  end
+  if nVvec(j) == 0
+    nVvec(j) = NaN;
+  end
 end
 
 figure(6)
 title(nWtitle)
-xlabel(&#39;Time (ms)&#39;)
-ylabel(&#39;Amplitude&#39;)
+xlabel('Time (ms)')
+ylabel('Amplitude')
 hold on
-plot(yNew,&#39;g&#39;)
-set(gca,&#39;FontSize&#39;,16)
+plot(yNew,'g')
+set(gca,'FontSize',16)
 hold on
-plot(nZnThresh,&#39;b&#39;)
-set(gca,&#39;FontSize&#39;,16)
+plot(nZnThresh,'b')
+set(gca,'FontSize',16)
 hold on
-plot(nEnThresh,&#39;r&#39;)
-set(gca,&#39;FontSize&#39;,16)
+plot(nEnThresh,'r')
+set(gca,'FontSize',16)
 hold on
-scatter(nUNVtime,nUNVvec,&#39;b&#39;,&#39;s&#39;,&#39;filled&#39;)
+scatter(nUNVtime,nUNVvec,'b','s','filled')
 hold on
-scatter(nVtime,nVvec,&#39;r&#39;,&#39;s&#39;,&#39;filled&#39;)
+scatter(nVtime,nVvec,'r','s','filled')
 hold on
-legend(&#39;Silent&#39;,&#39;Unvoiced&#39;,&#39;Voiced&#39;)
-set(findall(gcf,&#39;type&#39;,&#39;text&#39;),&#39;FontSize&#39;,16,&#39;fontWeight&#39;,&#39;bold&#39;)
+legend('Silent','Unvoiced','Voiced')
+set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','bold')
 
 end
