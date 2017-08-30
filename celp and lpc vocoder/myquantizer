@@ -1,0 +1,10 @@
+function [output] = myquantizer(signal, nBits)
+
+x = linspace(min(signal),max(signal),2^nBits);
+output = interp1(x,x,signal,'nearest');
+for i = 1:length(output)
+    if isnan(output(i))
+        output(i) = 0;
+    end
+end
+end
