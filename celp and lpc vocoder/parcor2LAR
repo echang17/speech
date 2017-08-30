@@ -1,0 +1,7 @@
+function LAR = parcor2LAR(k,p)
+LAR = ones(1,p);
+for i = 1:p
+    g = log10((1-k(i))/(1+k(i)));
+    LAR(i) = g;
+
+end
